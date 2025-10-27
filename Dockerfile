@@ -21,17 +21,10 @@ RUN pip install --no-cache-dir \
     requests \
     flask
 
-# Copy all application files
-COPY main.py .
-COPY app.py .
-COPY start.sh .
-
-# Make the start script executable
-RUN chmod +x start.sh
-
 # Expose the web server port (default 7860 for HF Spaces)
 EXPOSE 7860
 
 # Run the start script
-CMD ["./start.sh"]
+CMD python main.py
+
 
