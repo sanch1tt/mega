@@ -2,31 +2,28 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies (megatools for the bot, ffmpeg for video)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     megatools \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Create writable directories for session and downloads
-# This now includes the 'downloads' folder inside /data
+# Create writable directories for sessions and downloads
 RUN mkdir -p /data/downloads && chmod -R 777 /data
 
-# Copy and install Python requirements
-# We install directly to avoid 'requirements.txt' errors
+# Install all Python dependencies directly
 RUN pip install --no-cache-dir \
-    humanize \
-    pymegatools \
     telebot \
     requests \
-    flask
+    flask \
+    humanize \
+    pymegatools
 
+# Copy main bot file
 COPY main.py .
-# Expose the web server port (default 7860 for HF Spaces)
+
+# Expose port for Flask webserver (used for keep-alive / HF Spaces)
 EXPOSE 7860
 
-# Run the start script
-CMD python main.py
-
-
-
+# Run the bot
+CMD ["python", "main.py"]
