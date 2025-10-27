@@ -14,10 +14,10 @@ from pymegatools import Megatools
 from pymegatools.pymegatools import MegaError
 
 # 🔹 Configuration
-API_ID = int(os.environ.get("API_ID", 20687211))
-API_HASH = os.environ.get("API_HASH", "4523f58b045175baaeaf1ba29733f31c")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8318388017:AAGfxwJhAUiFB3xMQ5Sid4rgF0nJHsVUqsw")
-BOT_OWNER_ID = int(os.environ.get("BOT_OWNER_ID", 7014665654))
+API_ID = int(os.environ.get("API_ID")
+API_HASH = os.environ.get("API_HASH")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+BOT_OWNER_ID = int(os.environ.get("BOT_OWNER_ID")
 
 # --- File Management ---
 # We use a /data directory which is created in the Dockerfile for persistent storage
@@ -332,4 +332,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
