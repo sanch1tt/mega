@@ -1,8 +1,8 @@
 import os
 import re
 import logging
-from telebot import TeleBot
-from mega import Mega
+import telebot
+from pymegatools import MegaDownloader
 
 # ------------------- CONFIG -------------------
 API_ID = int(os.environ.get("API_ID", 20687211))
@@ -11,41 +11,43 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "8318388017:AAGfxwJhAUiFB3xMQ5Sid4rgF0nJ
 BOT_OWNER_ID = int(os.environ.get("BOT_OWNER_ID", 7014665654))
 
 # ------------------- SETUP -------------------
-bot = TeleBot(BOT_TOKEN)
+bot = telebot.TeleBot(BOT_TOKEN)
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# ------------------- HELPER FUNCTIONS -------------------
+# ------------------- HELPERS -------------------
 
 def is_mega_link(url: str):
-    """Return True if link is a valid Mega.nz file or folder link."""
+    """Check if valid Mega link (file or folder)."""
     pattern = r'https://mega\.nz/(file|folder)/[A-Za-z0-9_-]+#[A-Za-z0-9_-]+'
     return bool(re.match(pattern, url))
 
 
 def download_from_mega(url: str):
-    """Download file/folder from Mega.nz and return local file path(s)."""
+    """Download from Mega.nz using pymegatools."""
     try:
-        mega = Mega()
-        m = mega.login()  # guest login
+        downloader = MegaDownloader()
+        downloaded_files = downloader.download(url)
+        files = []
 
-        if "/folder/" in url:
-            folder = m.download_url(url)
-            paths = []
-            for root, _, files in os.walk(folder):
-                for file in files:
-                    paths.append(os.path.join(root, file))
-            return paths
-        else:
-            path = m.download_url(url)
-            return [path]
+        if isinstance(downloaded_files, list):
+            for f in downloaded_files:
+                if os.path.isfile(f):
+                    files.append(f)
+                else:
+                    for root, _, fs in os.walk(f):
+                        for file in fs:
+                            files.append(os.path.join(root, file))
+        elif os.path.isfile(downloaded_files):
+            files.append(downloaded_files)
+        return files
+
     except Exception as e:
         logger.error(f"❌ Mega download failed: {e}", exc_info=True)
         return None
 
 
 def edit_message(msg, text):
-    """Safely edits Telegram messages."""
     try:
         bot.edit_message_text(text, msg.chat.id, msg.message_id, parse_mode="Markdown")
     except Exception as e:
@@ -74,8 +76,6 @@ def upload_file(chat_id, status_msg, file_path, filename, file_index, total_file
                 bot.send_audio(chat_id, f, caption=caption)
             elif ext in [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]:
                 bot.send_photo(chat_id, f, caption=caption)
-            elif ext in [".pdf", ".zip", ".rar", ".7z", ".tar", ".gz", ".txt", ".docx", ".pptx"]:
-                bot.send_document(chat_id, f, caption=caption)
             else:
                 bot.send_document(chat_id, f, caption=caption)
 
@@ -92,11 +92,11 @@ def upload_file(chat_id, status_msg, file_path, filename, file_index, total_file
             os.remove(file_path)
 
 
-# ------------------- COMMAND HANDLERS -------------------
+# ------------------- BOT COMMANDS -------------------
 
 @bot.message_handler(commands=["start"])
 def start_command(message):
-    bot.reply_to(message, "👋 Send me any Mega.nz file or folder link to download and upload here.")
+    bot.reply_to(message, "👋 Send me a Mega.nz link (file or folder), and I’ll upload it to Telegram!")
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
@@ -123,5 +123,5 @@ def handle_mega(message):
 
 # ------------------- RUN -------------------
 if __name__ == "__main__":
-    logger.info("🚀 Bot started successfully!")
+    logger.info("🚀 Bot started successfully with pymegatools!")
     bot.infinity_polling()
