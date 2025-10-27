@@ -21,10 +21,12 @@ RUN pip install --no-cache-dir \
     requests \
     flask
 
+COPY main.py .
 # Expose the web server port (default 7860 for HF Spaces)
 EXPOSE 7860
 
 # Run the start script
 CMD python main.py
+
 
 
